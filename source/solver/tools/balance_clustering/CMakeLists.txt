@@ -20,7 +20,8 @@ target_link_libraries(
          icts_min_cost_flow
          icts_anneal_opt
          icts_timing_propagator
-         icts_tree_builder)
+         icts_tree_builder
+         )
 
 target_include_directories(
   icts_balance_clustering

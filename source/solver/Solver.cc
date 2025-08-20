@@ -27,6 +27,7 @@
 
 #include "BalanceClustering.hh"
 #include "CtsDesign.hh"
+#include "SCG_builder.hh"
 #include "ThreadPool/ThreadPool.h"
 #include "TimingPropagator.hh"
 #include "TreeBuilder.hh"
@@ -37,6 +38,9 @@ namespace icts {
 void Solver::run()
 {
   LOG_INFO << "[DEBUG] >>>>>> My Custom iCTS Build Running <<<<<<";
+  LOG_INFO << SCG();
+  LOG_INFO << "[DEBUG] >>>>>> My Custom iCTS Build Running <<<<<<";
+
   init();
   resolveSinks();
   breakLongWire();
