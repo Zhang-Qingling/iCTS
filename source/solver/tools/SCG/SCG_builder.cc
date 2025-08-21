@@ -18,8 +18,8 @@ void SCG::addArc(double T, const FFArc& a)  // 时钟周期，弧a
   if (is == _idx.end() || id == _idx.end())  // 起止pin是否在_sinks内
     return;
   int i = is->second, j = id->second;
-  double L = a.hold_dst - a.t_cq_src - a.t_logic;       // skew下界
-  double U = T - a.setup_dst - a.t_cq_src - a.t_logic;  // skew上界
+  double L = a.hold_dst - a.dmin;       // skew下界
+  double U = T - a.setup_dst - a.dmax;  // skew上界
   if (i == j)
     return;
   _adj[i][j] = std::min(_adj[i][j], -L);  // 边 i→j 权 -L
