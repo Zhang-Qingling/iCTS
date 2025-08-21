@@ -18,5 +18,5 @@ cd iEDA/bin
 ```
 跑某一个自测试：
 ```bash
-./icts_scg_test --gtest_filter=simpleTwoFF
+./icts_scg_test --gtest_filter=SCG.CreateArc
 ```

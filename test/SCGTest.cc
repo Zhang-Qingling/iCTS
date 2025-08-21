@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Inst.hh"
-#include "Node.hh"         // for Point
+#include "Inst.hh"         // for Point
 #include "SCG_builder.hh"  // SCG 头
 using namespace icts;
 static icts::Pin* make_ff_clk_pin(const std::string& ff_name, const Point& loc)
@@ -13,7 +12,7 @@ static icts::Pin* make_ff_clk_pin(const std::string& ff_name, const Point& loc)
   return clk;
 }
 // 添加弧
-TEST(SCG, SimpleTwoFF)
+TEST(SCG, CreateArc)
 {
   // 构造两个FF时钟脚
   icts::Pin* i_clk = make_ff_clk_pin("FF_I", Point(0, 0));
@@ -54,9 +53,8 @@ TEST(SCG, SimpleTwoFF)
   EXPECT_NEAR(u_ji, -L, 1e-12);
 }
 
-TEST(SCG, ThreeFF_Closure)
+TEST(SCG, FloydTest)
 {
-  // 三个点，测试 Floyd 的传递闭包是否正常（间接路径收紧上界/下界）
   icts::Pin* A = make_ff_clk_pin("FF_A", Point(0, 0));
   icts::Pin* B = make_ff_clk_pin("FF_B", Point(10, 0));
   icts::Pin* C = make_ff_clk_pin("FF_C", Point(20, 0));
@@ -66,7 +64,6 @@ TEST(SCG, ThreeFF_Closure)
 
   const double T = 1.0, tcq = 0.05, setup = 0.05, hold = 0.05;
 
-  // 选不同 “t_logic” 来形成“间接更紧”的约束
   // A->B
   FFArc ab{A, B, 0.20, tcq, setup, hold};
   // B->C
