@@ -38,7 +38,6 @@ namespace icts {
 void Solver::run()
 {
   LOG_INFO << "[DEBUG] >>>>>> My Custom iCTS Build Running <<<<<<";
-  LOG_INFO << SCG();
   LOG_INFO << "[DEBUG] >>>>>> My Custom iCTS Build Running <<<<<<";
 
   init();

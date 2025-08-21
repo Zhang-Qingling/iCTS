@@ -1,9 +1,7 @@
 #pragma once
 #include <iostream>
-#include <limits>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include "Inst.hh"
@@ -17,7 +15,7 @@ struct FFArc
   Pin* src_ff_clk = nullptr;  // 起始FF的引脚
   Pin* dst_ff_clk = nullptr;  // 终点FF的引脚
   double t_logic = 0.0;       // FF之间逻辑电路时延
-  double t_CQ_src = 0.0;      // 起始FF的内部时延
+  double t_cq_src = 0.0;      // 起始FF的内部时延
   double setup_dst = 0.0;     // 终点FF的setup时延
   double hold_dst = 0.0;      // 终点FF的hold时延
 };
@@ -26,7 +24,7 @@ struct FFArc
 class SCG
 {
  public:
-  SCG() = delete;
+  SCG() = default;
   ~SCG() = default;
   void setSinks(const std::vector<Pin*>& sinks)  // 图的顶点数据
   {
@@ -45,8 +43,8 @@ class SCG
     if (is == _idx.end() || id == _idx.end())  // 起止pin是否在_sinks内
       return;
     int i = is->second, j = id->second;
-    double L = a.hold_dst - a.t_CQ_src - a.t_logic;       // skew下界
-    double U = T - a.setup_dst - a.t_CQ_src - a.t_logic;  // skew上界
+    double L = a.hold_dst - a.t_cq_src - a.t_logic;       // skew下界
+    double U = T - a.setup_dst - a.t_cq_src - a.t_logic;  // skew上界
     if (i == j)
       return;
     _adj[i][j] = std::min(_adj[i][j], -L);  // 边 i→j 权 -L
