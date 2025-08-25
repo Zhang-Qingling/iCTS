@@ -14,8 +14,8 @@ struct FFArc
 {
   Pin* src_ff_clk = nullptr;  // 起始FF的引脚
   Pin* dst_ff_clk = nullptr;  // 终点FF的引脚
-  double dmin = 0.0;          // 组合路径的最小延迟，包含t_cq和tlogic
-  double dmax = 0.0;          // 组合路径的最大延迟
+  double t_logic = 0.0;       // FF之间逻辑电路时延
+  double t_cq_src = 0.0;      // 起始FF的内部时延
   double setup_dst = 0.0;     // 终点FF的setup时延
   double hold_dst = 0.0;      // 终点FF的hold时延
 };
@@ -30,6 +30,7 @@ class SCG
   void addArc(double T, const FFArc& a);                  // 加入边
   bool solve();                                           // 计算最短路矩阵，检测是否可行（无负环）
   std::pair<double, double> fsr(Pin* i_clk, Pin* j_clk);  // 查询 ti - tj 的FSR [L,U]
+
  private:
   static constexpr double INF = 1e100;
   std::vector<Pin*> _sinks;                     // idx映射pin

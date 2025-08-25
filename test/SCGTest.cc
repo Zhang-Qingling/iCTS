@@ -29,7 +29,8 @@ TEST(SCG, CreateArc)
   FFArc a;
   a.src_ff_clk = i_clk;
   a.dst_ff_clk = j_clk;
-  a.dmin = a.dmax = t_logic + tcq;
+  a.t_cq_src = tcq;
+  a.t_logic = t_logic;
   a.setup_dst = setup_j;
   a.hold_dst = hold_j;
 
