@@ -13,17 +13,17 @@ bool SCG::init(const std::string& net_name, const std::vector<Pin*>& sinks)
   }
 
   // 从 CTSAPI 取周期
-  double T_ns = CTSAPIInst.getClockPeriodNs(net_name);
+  double T_ns = CTSAPIInst.getClockPeriodNsByNet(net_name);
 
   setSinks(sinks);
 
   // 从CTSAPI取弧（待完成）
 
-  const bool feasible = solve();
-  if (!feasible) {
-    LOG_WARNING << "[SCG] Infeasible constraints (negative cycle).";
-  }
-  return feasible;
+  // const bool feasible = solve();
+  // if (!feasible) {
+  //    LOG_WARNING << "[SCG] Infeasible constraints (negative cycle).";
+  // }
+  return 0;
 }
 
 void SCG::setSinks(const std::vector<Pin*>& sinks)  // 图的顶点数据

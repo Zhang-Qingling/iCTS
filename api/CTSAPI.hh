@@ -115,7 +115,7 @@ class CTSAPI
   double getCapOut(const std::string& pin_name) const;
   std::vector<double> solvePolynomialRealRoots(const std::vector<double>& coeffs);
   ieda_feature::CTSSummary outputSummary();
-  double getClockPeriodNs(const std::string& clk_name) const;
+  double getClockPeriodNsByNet(const std::string& net_name) const;
 
   // synthesis
   int32_t getDbUnit() const;

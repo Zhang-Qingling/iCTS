@@ -752,9 +752,9 @@ void Solver::buildUSTDME()
   _level_insts.push_back(std::move(level0));
 
   // 调 SCG 从 CTS 初始化
-  // icts::SCG scg;
-  // bool ok = scg.init(_net_name, _sink_pins);
-  // LOG_INFO << "[UST/DME] SCG init " << (ok ? "OK" : "FAIL");
+  icts::SCG scg;
+  bool ok = scg.init(_net_name, _sink_pins);
+  LOG_INFO << "[UST/DME] SCG init " << (ok ? "OK" : "FAIL");
 
   // 确保根实例有 cell
   Inst* root_inst = _driver->get_inst();
