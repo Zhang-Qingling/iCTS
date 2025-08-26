@@ -19,4 +19,5 @@ target_include_directories(icts_SCG PUBLIC
 target_link_libraries(icts_SCG PUBLIC
   icts_solver_database
   icts_timing_propagator
+  icts_api
 )

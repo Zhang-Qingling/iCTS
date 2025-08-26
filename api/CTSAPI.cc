@@ -713,6 +713,18 @@ std::vector<double> CTSAPI::solvePolynomialRealRoots(const std::vector<double>& 
   return _model_factory->solvePolynomialRealRoots(coeffs);
 }
 
+double CTSAPI::getClockPeriodNs(const std::string& clk_name) const
+{
+  auto clk_list = _timing_engine->getClockList();
+  for (auto* clk : clk_list) {
+    if (clk && std::string(clk->get_clock_name()) == clk_name) {
+      return clk->getPeriodNs();
+    }
+  }
+  LOG_WARNING << "getClockPeriodNs: clock not found: " << clk_name;
+  return 0.0;
+}
+
 // synthesis
 int32_t CTSAPI::getDbUnit() const
 {

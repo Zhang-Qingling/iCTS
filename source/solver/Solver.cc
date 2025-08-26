@@ -724,6 +724,10 @@ void Solver::pinCapDistReport(const std::vector<Inst*>& insts) const
   LOG_INFO << ">>> Avg: " << avg_val << " fF" << std::endl;
   LOG_INFO << ">>> Median: " << median_val << " fF" << std::endl;
 }
+// source/solver/Solver.cc 里的 buildUSTDME()，简化版示例
+#include "tools/SCG/SCG_builder.hh"
+// 不要 include CTSAPI.hh
+
 void Solver::buildUSTDME()
 {
   LOG_INFO << "[UST/DME] Build a trivial STAR: driver -> all sinks for net " << _net_name;
@@ -747,8 +751,12 @@ void Solver::buildUSTDME()
   _level_insts.clear();
   _level_insts.push_back(std::move(level0));
 
-  // 确保根实例有 cell
+  // 调 SCG 从 CTS 初始化
+  // icts::SCG scg;
+  // bool ok = scg.init(_net_name, _sink_pins);
+  // LOG_INFO << "[UST/DME] SCG init " << (ok ? "OK" : "FAIL");
 
+  // 确保根实例有 cell
   Inst* root_inst = _driver->get_inst();
   if (root_inst->get_cell_master().empty()) {
     // 用 root buffer 类型；没有就退回最小单元
@@ -760,7 +768,7 @@ void Solver::buildUSTDME()
     }
   }
 
-  // 建立“星形”拓扑：driver 直连每个 sink
+  // driver 直连每个 sink
   for (Pin* sink_pin : _sink_pins) {
     TreeBuilder::directConnectTree(_driver, sink_pin);
   }

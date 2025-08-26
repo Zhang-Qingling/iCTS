@@ -24,11 +24,11 @@
 #include <cassert>
 #include <fstream>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <vector>
-#include <optional>
 
 #include "../../../database/interaction/ids.hpp"
 
@@ -115,6 +115,7 @@ class CTSAPI
   double getCapOut(const std::string& pin_name) const;
   std::vector<double> solvePolynomialRealRoots(const std::vector<double>& coeffs);
   ieda_feature::CTSSummary outputSummary();
+  double getClockPeriodNs(const std::string& clk_name) const;
 
   // synthesis
   int32_t getDbUnit() const;

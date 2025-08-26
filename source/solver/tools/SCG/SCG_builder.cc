@@ -1,6 +1,31 @@
 #include "SCG_builder.hh"
 
+#include "CTSAPI.hh"
 namespace icts {
+
+bool SCG::init(const std::string& net_name, const std::vector<Pin*>& sinks)
+{
+  // sink的full_name到自身
+  std::unordered_map<std::string, Pin*> name2pin;
+  name2pin.reserve(sinks.size());
+  for (auto* p : sinks) {
+    name2pin[p->get_name()] = p;
+  }
+
+  // 从 CTSAPI 取周期
+  double T_ns = CTSAPIInst.getClockPeriodNs(net_name);
+
+  setSinks(sinks);
+
+  // 从CTSAPI取弧（待完成）
+
+  const bool feasible = solve();
+  if (!feasible) {
+    LOG_WARNING << "[SCG] Infeasible constraints (negative cycle).";
+  }
+  return feasible;
+}
+
 void SCG::setSinks(const std::vector<Pin*>& sinks)  // 图的顶点数据
 {
   _sinks = sinks;

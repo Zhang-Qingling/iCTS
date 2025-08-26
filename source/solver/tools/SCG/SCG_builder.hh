@@ -26,6 +26,7 @@ class SCG
  public:
   SCG() = default;
   ~SCG() = default;
+  bool init(const std::string& net_name, const std::vector<Pin*>& sinks);
   void setSinks(const std::vector<Pin*>& sinks);          // 图的顶点数据
   void addArc(double T, const FFArc& a);                  // 加入边
   bool solve();                                           // 计算最短路矩阵，检测是否可行（无负环）
