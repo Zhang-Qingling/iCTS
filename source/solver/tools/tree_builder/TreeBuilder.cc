@@ -603,9 +603,14 @@ Inst* TreeBuilder::cbsTree(const std::string& net_name, const std::vector<Pin*>&
  * @param max_len
  * @return Inst*
  */
-Inst* TreeBuilder::shiftCBSTree(const std::string& net_name, const std::vector<Pin*>& loads, const std::optional<double>& skew_bound,
-                                const std::optional<Point>& guide_loc, const TopoType& topo_type, const bool& shift,
-                                const std::optional<double>& max_len)
+Inst* TreeBuilder::shiftCBSTree(const std::string& net_name,              // 本子树/这次连线的 net 名（方便标识/调试）
+                                const std::vector<Pin*>& loads,           // 这一簇要驱动的终端 pins（叶子）
+                                const std::optional<double>& skew_bound,  // 允许的簇内 skew 上限（用于拓扑/长度分配）
+                                const std::optional<Point>& guide_loc,    // 想把根 buffer 引导到的“目标位置”（可缺省）
+                                const TopoType& topo_type,                // 拓扑形式，这里常用 kBiPartition（二分递归）
+                                const bool& shift,                        // 是否允许做“根位置的小幅移动”
+                                const std::optional<double>& max_len      // 子树允许的最大线长（用于限制 shift 距离）
+)
 {
   {
     auto* buf = defaultTree(net_name, loads, skew_bound, guide_loc, topo_type);

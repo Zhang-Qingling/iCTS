@@ -82,10 +82,14 @@ class Solver
   void higherDelayOpt(std::vector<std::vector<Inst*>>& clusters, std::vector<Point>& guide_centers,
                       std::vector<Inst*>& level_insts) const;  // 更高延迟的分组优化
 
+  // ============= UST/DME =============
+  void buildUSTDME();
+
   // ============= 报表和调试输出 =============
-  void writeNetPy(Pin* root, const std::string& save_name = "net") const;  // 把树写成 Python 脚本，可绘图
-  void levelReport() const;                                                // 按层统计（fanout / cap / slew / delay / skew）
-  void pinCapDistReport(const std::vector<Inst*>& insts) const;            // 打印某层所有 pin 的电容分布
+  void writeNetPy(Pin* root, const std::string& save_name = "net") const;           // 把树写成 Python 脚本，可绘图
+  void writeManhattanNetPy(Pin* root, const std::string& save_name = "net") const;  // 支持Manhattan布线
+  void levelReport() const;                                                         // 按层统计（fanout / cap / slew / delay / skew）
+  void pinCapDistReport(const std::vector<Inst*>& insts) const;                     // 打印某层所有 pin 的电容分布
 
   // ============= 成员变量 =============
   std::string _net_name;           // 时钟网络名字

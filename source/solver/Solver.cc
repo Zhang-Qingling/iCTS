@@ -39,12 +39,9 @@ namespace icts {                    // 命名空间 iCTS 所有符号
 void Solver::run()
 {
   LOG_INFO << "[DEBUG] >>>>>> My Custom iCTS Build Running <<<<<<";  // 调试打印：开始运行自定义构建
-
-  init();           // 初始化：把 CtsPin/CtsInstance 转换为内部 Inst/Pin，并设置 driver/_sink_pins
-  resolveSinks();   // 自底向上层次化聚类/合并，生成顶层负载集合 _top_pins（或根）
-  breakLongWire();  // 对过长的 driver→sink 连接进行分段插缓冲，最后生成顶层网络
-                    // report
-  levelReport();    // 生成各层统计报表（fanout/netlen/cap/slew/delay/skew 等）
+  init();  // 初始化：把 CtsPin/CtsInstance 转换为内部 Inst/Pin，并设置 driver/_sink_pins
+  buildUSTDME();
+  levelReport();  // 生成各层统计报表（fanout/netlen/cap/slew/delay/skew 等）
 }
 
 void Solver::runbak()  // 旧的run
@@ -493,6 +490,70 @@ void Solver::higherDelayOpt(std::vector<std::vector<Inst*>>& clusters, std::vect
   guide_centers = lower_guide_centers;  // 更新为对应引导点
 }
 
+void Solver::writeManhattanNetPy(Pin* root, const std::string& save_name) const
+{
+  LOG_INFO << "Writing rectilinear (Manhattan) net to python file...";
+  auto* config = CTSAPIInst.get_config();
+  auto path = config->get_work_dir();
+  std::ofstream ofs(path + "/" + save_name + ".py");
+
+  ofs << "import matplotlib.pyplot as plt\n";
+  ofs << "fig = plt.figure(figsize=(8,6), dpi=300)\n";
+  ofs << "ax = plt.gca()\n";
+  ofs << "ax.set_aspect('equal', adjustable='box')\n";  // 等比例显示
+  ofs << "plt.axis('off')\n";                           // 隐藏坐标轴
+
+  // 若 r_h*c_v < r_v*c_h，则倾向 HV，否则 VH
+  bool use_hv = true;
+  {
+    double r_h = TimingPropagator::getUnitRes(LayerPattern::kH);
+    double r_v = TimingPropagator::getUnitRes(LayerPattern::kV);
+    double c_h = TimingPropagator::getUnitCap(LayerPattern::kH);
+    double c_v = TimingPropagator::getUnitCap(LayerPattern::kV);
+    if (r_h * c_v > r_v * c_h) {
+      use_hv = false;  // 画成 VH
+    }
+  }
+
+  auto write_node = [&](Node* node) {
+    int x = node->get_location().x();
+    int y = node->get_location().y();
+    ofs << "plt.scatter([" << x << "], [" << y << "], s=6, zorder=10)\n";
+    ofs << "plt.text(" << x << ", " << y << ", '" << node->get_name() << "', fontsize=6)\n";
+
+    auto parent = node->get_parent();
+    if (!parent)
+      return;
+
+    int px = parent->get_location().x();
+    int py = parent->get_location().y();
+
+    // 如果已经共线，只画一段
+    if (x == px || y == py) {
+      ofs << "plt.plot([" << x << ", " << px << "],[" << y << ", " << py << "], linewidth=0.6, zorder=5)\n";
+      return;
+    }
+
+    if (use_hv) {
+      // 先水平到 (px, y)，再垂直到 (px, py)
+      ofs << "plt.plot([" << x << ", " << px << "],[" << y << ", " << y << "], linewidth=0.6, zorder=5)\n";
+      ofs << "plt.plot([" << px << ", " << px << "],[" << y << ", " << py << "], linewidth=0.6, zorder=5)\n";
+    } else {
+      // 先垂直到 (x, py)，再水平到 (px, py)
+      ofs << "plt.plot([" << x << ", " << x << "],[" << y << ", " << py << "], linewidth=0.6, zorder=5)\n";
+      ofs << "plt.plot([" << x << ", " << px << "],[" << py << ", " << py << "], linewidth=0.6, zorder=5)\n";
+    }
+  };
+  root->preOrder(write_node);
+
+  // 只保存文件，不显示窗口
+  ofs << "plt.savefig('" << save_name << ".png', dpi=300, bbox_inches='tight')\n";
+  ofs.close();
+
+  LOG_INFO << "Wrote " << (path + "/" + save_name + ".py") << " (run it in the container: `python3 " << save_name << ".py`) "
+           << "→ outputs " << save_name << ".png";
+}
+
 void Solver::writeNetPy(Pin* root, const std::string& save_name) const
 {
   LOG_INFO << "Writing net to python file...";  // 提示开始写出可视化脚本
@@ -662,6 +723,56 @@ void Solver::pinCapDistReport(const std::vector<Inst*>& insts) const
   LOG_INFO << ">>> Max: " << max_val << " fF" << std::endl;
   LOG_INFO << ">>> Avg: " << avg_val << " fF" << std::endl;
   LOG_INFO << ">>> Median: " << median_val << " fF" << std::endl;
+}
+void Solver::buildUSTDME()
+{
+  LOG_INFO << "[UST/DME] Build a trivial STAR: driver -> all sinks for net " << _net_name;
+
+  if (_driver == nullptr) {
+    LOG_WARNING << "Driver is null, abort trivial build.";
+    return;
+  }
+  if (_sink_pins.empty()) {
+    LOG_WARNING << "No sinks, nothing to connect.";
+    return;
+  }
+
+  // 把第0层记录为所有 sink 的实例，方便 levelReport 统计
+
+  std::vector<Inst*> level0;
+  level0.reserve(_sink_pins.size());
+  for (auto* p : _sink_pins) {
+    level0.push_back(p->get_inst());
+  }
+  _level_insts.clear();
+  _level_insts.push_back(std::move(level0));
+
+  // 确保根实例有 cell
+
+  Inst* root_inst = _driver->get_inst();
+  if (root_inst->get_cell_master().empty()) {
+    // 用 root buffer 类型；没有就退回最小单元
+    auto root_cell = TimingPropagator::getRootSizeCell();
+    if (!root_cell.empty()) {
+      root_inst->set_cell_master(root_cell);
+    } else {
+      root_inst->set_cell_master(TimingPropagator::getMinSizeCell());
+    }
+  }
+
+  // 建立“星形”拓扑：driver 直连每个 sink
+  for (Pin* sink_pin : _sink_pins) {
+    TreeBuilder::directConnectTree(_driver, sink_pin);
+  }
+
+  // 生成 Net，更新 RC/时序，登记输出
+  Net* net = TimingPropagator::genNet(_net_name, _driver, _sink_pins);
+  TimingPropagator::update(net);
+  _nets.push_back(net);
+
+  _level_insts.push_back({_driver->get_inst()});
+  _level = static_cast<int>(_level_insts.size()) - 1;
+  writeManhattanNetPy(_driver, "star_" + _net_name);
 }
 
 }  // namespace icts
